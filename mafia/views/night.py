@@ -37,7 +37,7 @@ def build_night_form(game, next_player, players):
         form.targets[0].choices = players
         return form
 
-    if not next_player.is_alive:
+    if not next_player.has_night_action():
         return SkipForm()
 
     num_targets = next_player.role.night_targets
