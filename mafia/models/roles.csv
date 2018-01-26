@@ -1,0 +1,12 @@
+id,name,night_action,night_action_uses,night_action_priority,day_action,day_action_uses,passive_action,passive_action_uses,passive_action_priority,alignment_id,perceived_alignment_id,description,action_optional,can_target_self,night_targets
+0,Mafia,,,,,,,,,0,0,A mean guy.,,,
+1,Godfather,,,,,,,,,0,1,"Part of the mafia, but inspects as innocent.",,,
+2,Hooker,block,-1,10,,,,,,0,0,Chooses one person to roleblock each night.,False,False,1
+3,Villager,,,,,,,,,1,1,A loser.,,,
+4,Detective,inspect,-1,1,,,,,,1,1,Chooses one person each night to learn their alignment.,False,False,1
+5,Doctor,heal,-1,-1,,,,,,1,1,Chooses one person each night to protect from kills. Cannot choose the same person two nights in a row.,False,True,1
+6,Vigilante,kill,1,0,,,,,,1,1,"Once per game, can kill a person at night.",True,True,1
+7,Sniper,,,,shoot,1,,,,0,0,"Once per game, can kill a person during the day.",,False,
+8,Bleeder,,,,,,bleed,-1,-1,1,1,"When killed at night, survives one extra day and dies the next night.",,,
+
+

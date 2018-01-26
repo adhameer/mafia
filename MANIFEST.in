@@ -1,0 +1,2 @@
+include *.txt *.ini *.cfg *.rst
+recursive-include mafia *.ico *.png *.css *.gif *.jpg *.txt *.mak *.mako *.js *.html *.xml

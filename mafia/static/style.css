@@ -1,0 +1,24 @@
+.players
+{
+    border-collapse: collapse;
+}
+
+.players, .players td, .players th
+{
+    border: 1px solid black;
+}
+
+.players td, .players th
+{
+    padding: 5px;
+}
+
+span.dead
+{
+    text-decoration: line-through;
+}
+
+span.bleeding
+{
+    color: red;
+}
