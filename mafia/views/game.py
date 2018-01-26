@@ -214,13 +214,23 @@ class Game():
         otherwise return None."""
 
         validate_night_action(player, targets)
-        self.action_log.append((player, targets))
 
-        # Actions that need to be performed immediately
-        if player.role.night_action in Game.immediate_actions:
-            result = perform_night_action(player, self, targets)
-            self.message_queue.append("Inspection result: {}".format(result))
-            return result
+        if player.has_night_action():
+            self.action_log.append((player, targets))
+
+            # Decrement remaining uses, if applicable
+            # Note: limited uses are based on night action attempts, i.e.
+            # if a role is blocked, it still loses a use if it tries to use
+            # its action.
+            if player.night_action_uses_left > 0:
+                player.night_action_uses_left -= 1
+
+            # Actions that need to be performed immediately
+            if player.role.night_action in Game.immediate_actions:
+                result = perform_night_action(player, self, targets)
+                self.message_queue.append("Inspection result: {}".format(
+                    result))
+                return result
 
     def do_passive_action(self, player, performed_actions):
         """Perform a player's passive action, if applicable."""
