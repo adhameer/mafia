@@ -11,7 +11,7 @@ import wtforms
 
 @view_config(route_name="play", request_method="GET", renderer="game.mako")
 def play_game(context, request):
-    """some stuff"""
+    """The gameplay page."""
 
     game = request.session.setdefault("game", None)
 
@@ -59,7 +59,7 @@ def play_game(context, request):
 
 @view_config(route_name="play", request_method="POST", renderer="game.mako")
 def play_game_process(context, request):
-    """some stuff"""
+    """Process clicks on the gameplay page."""
 
     game = request.session.setdefault("game", None)
 
