@@ -19,7 +19,7 @@ class Player():
         self.is_bleeding = False # bleeder
         self.is_activated = False # alien
         self.has_lost_action = False # psychic
-        self.has_gun = True # gunsmith targets
+        self.has_gun = False # gunsmith targets
 
         self.last_target = None # protective roles
 
