@@ -186,7 +186,7 @@ class Game():
             # original role is dead.
             player = self.action_queue.popleft()
             self.message_queue.append(
-                "Ask {} for their action".format(player.name))
+                "Ask the {} for their action".format(player.role.name))
             return player
 
         self.message_queue.append("All actions in")
