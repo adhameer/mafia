@@ -86,7 +86,7 @@ class Game():
                 players_with_role[player.role.id].append(player)
             else:
                 players_with_role[player.role.id] = [player]
-        for _, players in players_with_role.items():
+        for players in players_with_role.values():
             if len(players) > 1:
                 for i, player in enumerate(players):
                     player.role_name += " {}".format(i + 1)
@@ -106,7 +106,7 @@ class Game():
         # made more efficient, but not really worth it.
         # The random number is to stop plain mafia members from always being
         # ranked in the order they were initially entered.
-        mafia_members = filter(lambda p: p.role.alignment == "mafia",
+        mafia_members = filter(lambda p: p.alignment == "mafia",
             self.players)
         self.mafia_hierarchy = sorted(mafia_members,
             key=lambda p: (p.role.id, randint(0, 5)))
@@ -330,11 +330,11 @@ class Game():
         living_third_party = []
 
         for player in living_players:
-            if player.role.alignment == "mafia":
+            if player.alignment == "mafia":
                 living_mafia += 1
-            elif player.role.alignment == "town":
+            elif player.alignment == "town":
                 living_town += 1
-            elif player.role.alignment == "cult":
+            elif player.alignment == "cult":
                 living_cult += 1
             else:
                 living_third_party.append(player)

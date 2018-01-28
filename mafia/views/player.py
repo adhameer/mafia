@@ -11,6 +11,10 @@ class Player():
 
         self.is_alive = True
 
+        # Data initially taken from role, but can be changed
+        self.alignment = self.role.alignment
+        self.perceived_alignment = self.role.perceived_alignment
+
         # Data for limited-use actions. -1 means no limit.
         self.night_action_uses_left = self.role.night_action_uses
         self.day_action_uses_left = self.role.day_action_uses

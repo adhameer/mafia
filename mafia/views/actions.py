@@ -46,7 +46,7 @@ def inspect(user, game, target):
     if game.has_been_blocked(user):
         return "X" # blocked; no result
 
-    return target.role.perceived_alignment
+    return target.perceived_alignment
 
 ### DAY ACTIONS
 
