@@ -3,7 +3,8 @@ from .actions import (
     perform_night_action,
     perform_day_action,
     perform_passive_action,
-    ActionError, InvalidTargetError
+    ActionError, InvalidTargetError,
+    immediate_actions
 )
 from .player import Player
 
@@ -63,10 +64,6 @@ class DeathQueue():
 
 class Game():
     """A single mafia game."""
-
-    # Actions that need to trigger immediately, as opposed to at the end of
-    # the night when processing
-    immediate_actions = ("inspect")
 
     def __init__(self, players, day_start):
 
@@ -211,6 +208,11 @@ class Game():
 
         return next(filter(lambda p: p.is_alive, self.mafia_hierarchy), None)
 
+    def living_players(self):
+        """Return a list of all the players that are currently alive."""
+
+        return list(filter(lambda p: p.is_alive, self.players))
+
     def has_been_blocked(self, player):
         """Return True if player has been blocked tonight, False otherwise."""
 
@@ -227,7 +229,7 @@ class Game():
         Return the result of the night action if it was performed immediately,
         otherwise return None."""
 
-        validate_night_action(player, targets)
+        validate_night_action(player, targets, self)
 
         if player.has_night_action():
             self.action_log.append((player, targets))
@@ -240,7 +242,7 @@ class Game():
                 player.night_action_uses_left -= 1
 
             # Actions that need to be performed immediately
-            if player.role.night_action in Game.immediate_actions:
+            if player.role.night_action in immediate_actions:
                 result = perform_night_action(player, self, targets)
                 self.message_queue.append("Inspection result: {}".format(
                     result))
@@ -277,7 +279,7 @@ class Game():
         while self.action_log:
             player, targets = self.action_log.pop()
             performed_actions.append((player, targets))
-            if not player.role.night_action in Game.immediate_actions:
+            if not player.role.night_action in immediate_actions:
                 perform_night_action(player, self, targets)
 
 
@@ -287,7 +289,7 @@ class Game():
             filter(lambda p: p.has_passive_action(), self.players),
             key=lambda p: priority_key(p.role.passive_action_priority))
         for player in passive_actors:
-                self.do_passive_action(player, performed_actions)
+            self.do_passive_action(player, performed_actions)
 
 
     def end_night(self):

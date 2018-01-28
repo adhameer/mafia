@@ -88,9 +88,63 @@ def test_blocked_detective():
     game.do_night_action(hooker, [detective])
     assert game.do_night_action(detective, [hooker]) == "X"
 
+def test_parity_same():
+    players = [("parity detective", 9), ("villager 1", 3), ("villager 2", 3)]
+    game = Game(players, False)
+
+    parity_detective = next(players_with_role_id(game, 9))
+    villagers = players_with_role_id(game, 3)
+
+    assert game.do_night_action(parity_detective, list(villagers)) == "same"
+
+def test_parity_different():
+    players = [("parity detective", 9), ("villager", 3), ("mafia", 0)]
+    game = Game(players, False)
+
+    parity_detective = next(players_with_role_id(game, 9))
+    villager = next(players_with_role_id(game, 3))
+    mafia = next(players_with_role_id(game, 0))
+
+    assert (game.do_night_action(parity_detective, [villager, mafia])
+        == "different")
+
+def test_parity_godfather():
+    players = [("parity detective", 9), ("villager", 3), ("godfather", 1)]
+    game = Game(players, False)
+
+    parity_detective = next(players_with_role_id(game, 9))
+    villager = next(players_with_role_id(game, 3))
+    godfather = next(players_with_role_id(game, 1))
+
+    assert (game.do_night_action(parity_detective, [villager, godfather])
+        == "same")
+
+def test_parity_self():
+    players = [("parity detective", 9), ("villager", 3)]
+    game = Game(players, False)
+
+    parity_detective = next(players_with_role_id(game, 9))
+    villager = next(players_with_role_id(game, 3))
+
+    with pytest.raises(InvalidTargetError):
+        game.do_night_action(parity_detective, [parity_detective, villager])
+
+    with pytest.raises(InvalidTargetError):
+        game.do_night_action(parity_detective, [villager, parity_detective])
+
+def test_parity_same_target():
+    players = [("parity detective", 9), ("villager", 3), ("dummy", 3)]
+    game = Game(players, False)
+
+    parity_detective = next(players_with_role_id(game, 9))
+    villager = next(players_with_role_id(game, 3))
+
+    with pytest.raises(InvalidTargetError):
+        game.do_night_action(parity_detective, [villager, villager])
+
 ## KILLING
 def test_mafia_kill():
-    players = [("mafia", 0), ("villager", 3)]
+    players = [("mafia", 0), ("villager", 3), ("dummy", 3), ("dummy", 3)]
     game = Game(players, False)
 
     mafia = next(players_with_role_id(game, 0))
@@ -103,7 +157,7 @@ def test_mafia_kill():
     assert not villager.is_alive
 
 def test_mafia_kill_heal():
-    players = [("mafia", 0), ("doctor", 5)]
+    players = [("mafia", 0), ("doctor", 5), ("dummy", 3)]
     game = Game(players, False)
 
     mafia = next(players_with_role_id(game, 0))
@@ -117,7 +171,7 @@ def test_mafia_kill_heal():
     assert doctor.is_alive
 
 def test_vig():
-    players = [("vigilante", 6), ("mafia", 0)]
+    players = [("vigilante", 6), ("mafia", 0), ("dummy", 0), ("dummy", 3)]
     game = Game(players, False)
 
     vigilante = next(players_with_role_id(game, 6))
@@ -130,7 +184,7 @@ def test_vig():
     assert not mafia.is_alive
 
 def test_vig_heal():
-    players = [("vigilante", 6), ("doctor", 5)]
+    players = [("vigilante", 6), ("doctor", 5), ("mafia", 0)]
     game = Game(players, False)
 
     vigilante = next(players_with_role_id(game, 6))
@@ -163,7 +217,7 @@ def test_two_kills_heal():
 
 ## KILLING
 def test_sniper():
-    players = [("sniper", 7), ("villager", 3)]
+    players = [("sniper", 7), ("villager", 3), ("dummy", 3), ("dummy", 3)]
     game = Game(players, True)
 
     sniper = next(players_with_role_id(game, 7))
@@ -185,7 +239,7 @@ def test_sniper_self():
 
 ## BLEEDER
 def test_bleed():
-    players = [("bleeder", 8), ("mafia", 0)]
+    players = [("bleeder", 8), ("mafia", 0), ("dummy", 3)]
     game = Game(players, False)
 
     bleeder = next(players_with_role_id(game, 8))
@@ -216,10 +270,10 @@ def test_bleeder_healed():
     assert not bleeder.is_bleeding
 
 def test_bleeder_death():
-    players = [("bleeder", 8)]
+    players = [("bleeder", 8), ("mafia", 0), ("dummy", 3), ("dummy", 3)]
     game = Game(players, False)
 
-    bleeder = game.players[0]
+    bleeder = next(players_with_role_id(game, 8))
     bleeder.is_bleeding = True
     game.process_night_actions()
     game.end_night()
@@ -227,7 +281,7 @@ def test_bleeder_death():
     assert not bleeder.is_alive
 
 def test_bleeder_healed_after():
-    players = [("bleeder", 8), ("doctor", 5)]
+    players = [("bleeder", 8), ("doctor", 5), ("mafia", 0), ("dummy", 3)]
     game = Game(players, False)
 
     bleeder = next(players_with_role_id(game, 8))

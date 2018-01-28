@@ -12,7 +12,11 @@ class InvalidTargetError(ActionError):
 # Roles that can't attempt to target the same person two nights in a row
 non_consecutive_target_roles = ("Doctor", "Ghoul")
 
-def validate_night_action(user, targets):
+# Actions that need to trigger immediately, as opposed to at the end of
+# the night when processing
+immediate_actions = ("inspect", "parity")
+
+def validate_night_action(user, targets, game):
     """Check that the targets of a user's attempted night action are valid.
     If they are not, raise an exception."""
     if user in targets and not user.role.can_target_self:
@@ -23,6 +27,12 @@ def validate_night_action(user, targets):
             raise InvalidTargetError(
                 "Can't target the same person two nights in a row")
         user.last_target = targets[0]
+
+    # Check for duplicates - but only raise an error if there are enough
+    # living players that duplicates can be avoided
+    if (len(targets) > len(set(targets)) and
+        len(game.living_players()) > len(targets)):
+        raise InvalidTargetError("All targets must be different")
 
 ### NIGHT ACTIONS
 
@@ -47,6 +57,13 @@ def inspect(user, game, target):
         return "X" # blocked; no result
 
     return target.perceived_alignment
+
+def parity(user, game, target1, target2):
+    if game.has_been_blocked(user):
+        return "X" # blocked; no result
+
+    return ("same" if target1.perceived_alignment == target2.perceived_alignment
+        else "different")
 
 ### DAY ACTIONS
 
@@ -93,6 +110,7 @@ night_actions = {
     "heal": heal,
     "block": block,
     "inspect": inspect,
+    "parity": parity,
 }
 
 day_actions = {

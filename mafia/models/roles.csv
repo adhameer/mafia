@@ -8,5 +8,4 @@ id,name,night_action,night_action_uses,night_action_priority,day_action,day_acti
 6,Vigilante,kill,1,0,,,,,,1,1,"Once per game, can kill a person at night.",True,True,1
 7,Sniper,,,,shoot,1,,,,0,0,"Once per game, can kill a person during the day.",,False,
 8,Bleeder,,,,,,bleed,-1,-1,1,1,"When killed at night, survives one extra day and dies the next night.",,,
-
-
+9,Parity Detective,parity,-1,1,,,,,,1,1,Chooses two people each night to learn whether or not they have the same alignment.,False,False,2
