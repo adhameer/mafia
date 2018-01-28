@@ -20,7 +20,7 @@
                 ${player.name}
             </span>
         </td>
-        <td>${player.role.name}</td>
+        <td>${player.role_name}</td>
         <td>
             % if player.is_alive:
             ${player_form.lynch}

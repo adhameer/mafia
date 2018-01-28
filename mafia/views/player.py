@@ -7,6 +7,7 @@ class Player():
 
         self.name = name
         self.role = roles[role_id]
+        self.role_name = self.role.name
 
         self.is_alive = True
 

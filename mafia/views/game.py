@@ -76,6 +76,21 @@ class Game():
             key=lambda p: (p.role.alignment_id,
             priority_key(p.role.night_action_priority)))
 
+        # In case of multiple players with the same role, give them
+        # distinguishable names (e.g. Vigilante 1 and Vigilante 2)
+        # Not very nice-looking, but the simplest way to only number roles that
+        # actually need to be numbered.
+        players_with_role = {}
+        for player in self.players:
+            if player.role.id in players_with_role:
+                players_with_role[player.role.id].append(player)
+            else:
+                players_with_role[player.role.id] = [player]
+        for _, players in players_with_role.items():
+            if len(players) > 1:
+                for i, player in enumerate(players):
+                    player.role_name += " {}".format(i + 1)
+
         # Queue of messages to be accessed by the UI
         self.message_queue = deque()
 
@@ -186,7 +201,7 @@ class Game():
             # original role is dead.
             player = self.action_queue.popleft()
             self.message_queue.append(
-                "Ask the {} for their action".format(player.role.name))
+                "Ask {} for their action".format(player.role_name))
             return player
 
         self.message_queue.append("All actions in")

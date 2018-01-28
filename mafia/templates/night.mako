@@ -3,7 +3,7 @@
 % if player == "mafia":
 <h2>Mafia Kill</h2>
 % else:
-<h2>${player.name} (${player.role.name})'s action</h2>
+<h2>${player.name} (${player.role_name})'s action</h2>
 % endif
 
 % if isinstance(form, NoTargetForm):
