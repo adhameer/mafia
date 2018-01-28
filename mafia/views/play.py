@@ -3,6 +3,7 @@ from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
 
 from ..models import roles
 from .actions import ActionError
+from .game import GameOver
 from .day import *
 from .night import *
 
@@ -12,6 +13,10 @@ import wtforms
 @view_config(route_name="play", request_method="GET", renderer="game.mako")
 def play_game(context, request):
     """The gameplay page."""
+
+    if "winner" in request.session:
+        # Current game is already over
+        return HTTPSeeOther("/done")
 
     game = request.session.setdefault("game", None)
 
@@ -48,7 +53,13 @@ def play_game(context, request):
         else:
             # All night actions taken
             game.process_night_actions()
-            game.end_night()
+
+            try:
+                game.end_night()
+            except GameOver as e:
+                request.session["winner"] = str(e)
+                return HTTPFound("/done")
+
             game.start_day()
 
             # Refresh
@@ -60,6 +71,10 @@ def play_game(context, request):
 @view_config(route_name="play", request_method="POST", renderer="game.mako")
 def play_game_process(context, request):
     """Process clicks on the gameplay page."""
+
+    if "winner" in request.session:
+        # Current game is already over
+        return HTTPSeeOther("/done")
 
     game = request.session.setdefault("game", None)
 
@@ -75,6 +90,9 @@ def play_game_process(context, request):
             process_day_click(form, game)
         except ActionError as e:
             request.session.flash(str(e))
+        except GameOver as e:
+            request.session["winner"] = str(e)
+            return HTTPFound("/done")
 
         # Night phase button clicked
         if form.start_night.data:

@@ -112,6 +112,8 @@ class Game():
             key=lambda p: (p.role.id, randint(0, 5)))
 
         # Game log
+        # TODO: Need to create a class for logs, and use them to also record
+        # mafia kills and lynches.
         self.action_logs = []
 
         if day_start:
@@ -129,20 +131,17 @@ class Game():
             # TODO: End the game
             return
 
-        self.kill(player)
         self.message_queue.append("{} was lynched".format(player.name))
+        self.kill(player)
 
         self.start_night()
 
     def kill(self, player):
-        """Kill a player immediately. Used for gunshots, etc."""
+        """Kill a player immediately. Used for lynching, gunshots, etc.
+        NOT used for night kills."""
 
         player.is_alive = False
-
-        maybe_winner = self.winner()
-        if maybe_winner:
-            # TODO: End the game
-            return
+        self.check_winner()
 
     def start_day(self):
         """Prepare game state for the day phase."""
@@ -315,6 +314,16 @@ class Game():
         # Read all death announcements in a random order
         shuffle(announcements)
         self.message_queue.extend(announcements)
+
+        self.check_winner()
+
+    def check_winner(self):
+        """Check if a win condition has been met. If so, raise GameOver with
+        the name of the winning faction."""
+
+        maybe_winner = self.winner()
+        if maybe_winner:
+            raise GameOver(maybe_winner)
 
     def winner(self):
         """If a win condition has been met, return the name of the winning
