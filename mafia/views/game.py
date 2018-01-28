@@ -124,7 +124,7 @@ class Game():
     def lynch(self, player):
         """Lynch a player. Triggers win condition for active alien and fool."""
 
-        if player.role.name == "fool" or (player.role.name == "alien" and \
+        if player.role.name == "Fool" or (player.role.name == "Alien" and \
             player.is_activated):
             # TODO: End the game
             return
