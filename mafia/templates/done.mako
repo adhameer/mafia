@@ -28,8 +28,8 @@
 ## NOTE: currently assumes game didn't have a night 0 (i.e. started in the day phase)
 <h3>Night ${i + 1}</h3>
 <ul class="action-log">
-    % for player, targets in log:
-    <li><span class="player-name">${player.name}</span> (<span class="role">${player.role_name}</span>) targets <span class="target">${", ".join(target.name for target in targets)}</span></li>
+    % for player, action, targets in log:
+    <li><span class="player-name">${player.name}</span> (<span class="role">${player.role_name}</span>) uses <span class="action">${action.name}</span> on <span class="target">${", ".join(target.name for target in targets)}</span></li>
     % endfor
 </ul>
 % endfor

@@ -28,7 +28,7 @@ def fix_day_player_form(form, player, targets):
     if player.has_day_action():
         form.action_target.choices = targets
         form.action_submit.label = wtforms.fields.Label(
-            "action_submit", player.role.day_action.title())
+            "action_submit", player.role.day_action.name.title())
 
     if player.can_use_gun():
         form.gun_target.choices = targets

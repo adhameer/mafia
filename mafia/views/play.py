@@ -48,7 +48,7 @@ def play_game(context, request):
             # Ask for a target
             form = build_night_form(game, next_action, players)
             return {"game": game, "form": form, "messages": game.pop_messages(),
-                "player": next_action}
+                "player": next_action[0], "action": next_action[1]}
 
         else:
             # All night actions taken

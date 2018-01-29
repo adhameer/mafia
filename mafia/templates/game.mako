@@ -1,7 +1,7 @@
 <%inherit file="base.mako" />
 <%block name="title">Mafia - Game in Progress</%block>
 
-<h1>${game.phase.title()} ${game.turn}</h1>
+<h1>${game.turn()}</h1>
 
 % if messages:
 <div class="messages">

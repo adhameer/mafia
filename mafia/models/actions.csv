@@ -1,0 +1,9 @@
+id,name,priority,can_target_self,targets,immediate
+0,kill,0,True,1,False
+1,block,10,False,1,False
+2,inspect,1,False,1,True
+3,parity,1,False,2,True
+4,heal,-1,True,1,False
+5,shoot,0,False,1,
+6,bleed,-5,,,
+7,mafia kill,100,True,1,False

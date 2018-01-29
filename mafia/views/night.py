@@ -18,9 +18,11 @@ class SkipForm(wtforms.Form):
 
     submit = wtforms.SubmitField("Skip")
 
-def fix_target_form(form, player, targets):
+def fix_target_form(form, player, action, targets):
     """Dynamically set the proper attributes in a TargetForm."""
 
+    # TODO: need a way of indicating that an action is optional that isn't
+    # tied to role.
     if player.role.action_optional:
         targets = [(-1, "Don't use")] + targets
 
@@ -31,16 +33,12 @@ def build_night_form(game, next_player, players):
     """Depending on the next player to take their action, return the proper
     action form."""
 
-    if next_player == "mafia":
-        form = TargetForm()
-        form.targets.append_entry()
-        form.targets[0].choices = players
-        return form
+    player, action = next_player
 
-    if not next_player.has_night_action():
+    if not (action.name == "mafia kill" or player.has_night_action()):
         return SkipForm()
 
-    num_targets = next_player.role.night_targets
+    num_targets = action.targets
 
     if not num_targets:
         return NoTargetForm()
@@ -49,7 +47,7 @@ def build_night_form(game, next_player, players):
         form = TargetForm()
         for i in range(num_targets):
             form.targets.append_entry()
-        fix_target_form(form, next_player, players)
+        fix_target_form(form, player, action, players)
         return form
 
 def process_night_click(request, game):
@@ -71,7 +69,7 @@ def process_night_click(request, game):
         return False
 
     form = formclass(request.POST)
-    player = request.session["next_action"]
+    player, action = request.session["next_action"]
 
     if isinstance(form, NoTargetForm) and not form.choice.data:
         # Chose not to use an optional action
@@ -85,10 +83,6 @@ def process_night_click(request, game):
                 return True
             targets.append(game.players[target.data])
 
-    if player == "mafia":
-        game.mafia_kill = targets[0]
-        return True
-
-    game.do_night_action(player, targets)
+    game.do_night_action(player, action, targets)
     return True
 

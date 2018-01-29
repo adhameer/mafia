@@ -7,17 +7,21 @@ from .actions import (
     immediate_actions
 )
 from .player import Player
+from mafia.models.roles import actions
 
 from collections import deque
 from copy import copy
+from math import ceil
 from random import shuffle, randint
 
-def priority_key(k, reverse=True):
-    """Use for sorting players by night or passive action priority."""
+def priority_key(action, reverse=True):
+    """Use for sorting players by action priority."""
 
-    if k is not None:
-        return -k if reverse else k
-    return float("inf") if reverse else float("-inf")
+    if not action or action.priority is None:
+        return float("inf") if reverse else float("-inf")
+
+    return -action.priority if reverse else action.priority
+
 
 class GameOver(Exception):
     """Raised when the game is over. This is an exception so that it can be
@@ -71,7 +75,7 @@ class Game():
         # night action priority
         self.players = sorted([Player(*data) for data in players],
             key=lambda p: (p.role.alignment_id,
-            priority_key(p.role.night_action_priority)))
+            priority_key(p.role.night_action)))
 
         # In case of multiple players with the same role, give them
         # distinguishable names (e.g. Vigilante 1 and Vigilante 2)
@@ -94,7 +98,6 @@ class Game():
         # Data for night phase
         self.action_queue = deque()
         self.death_queue = DeathQueue()
-        self.mafia_kill = None
         self.action_log = []
 
         # Used to figure out which mafia member carries out the kill
@@ -113,12 +116,18 @@ class Game():
         # mafia kills and lynches.
         self.action_logs = []
 
+        self._turn = 0
+
         if day_start:
-            self.turn = 1
             self.start_day()
         else:
-            self.turn = 0
             self.start_night()
+
+    def turn(self):
+        """Return the phase and turn number this game is currently in, e.g.
+        "Day 1"."""
+
+        return "{} {}".format(self.phase.capitalize(), ceil(self._turn / 2))
 
     def lynch(self, player):
         """Lynch a player. Triggers win condition for active alien and fool."""
@@ -143,6 +152,7 @@ class Game():
     def start_day(self):
         """Prepare game state for the day phase."""
 
+        self._turn += 1
         self.phase = "day"
         self.message_queue.append("Tell everyone to wake up")
 
@@ -162,7 +172,7 @@ class Game():
         Return the result of the action, or None if the action does not
         give a result."""
 
-        if player in targets and not player.role.can_target_self:
+        if player in targets and not player.role.day_action.can_target_self:
             raise InvalidTargetError("This role can't target itself")
 
         result = perform_day_action(player, self, targets)
@@ -176,29 +186,36 @@ class Game():
     def start_night(self):
         """Prepare game state for the night phase."""
 
+        self._turn += 1
         self.phase = "night"
-        self.action_queue.extend(p for p in self.players
-                                 if p.role.night_action)
         self.message_queue.append("Tell everyone to go to bed")
+
+        # NOTE: currently the mafia kill can't be blocked because it has a
+        # really high priority so that the game will ask for it first.
+        # Need to think of a better way to do this.
+        killer = self.killing_mafia()
+        if killer:
+            self.action_queue.append((killer, actions["mafia kill"]))
+
+        self.action_queue.extend((p, p.role.night_action)
+                                 for p in self.players
+                                 if p.role.night_action)
 
     def next_action(self):
         """Should only be called during the night phase.
-        Return the player who should next perform a night action.
-        If the mafia should next decide a kill, return "mafia".
+        Return a tuple of (player, action) for the player who should next
+        perform a night action.
         If every player has taken their night action, return None."""
-
-        if not self.mafia_kill and self.killing_mafia():
-            self.message_queue.append("Ask the mafia to choose a target")
-            return "mafia"
 
         if self.action_queue:
             # NOTE: To add Nurse and Deputy, the best way to arrange it is
             # probably to return them here instead of the doc/cop if the
             # original role is dead.
-            player = self.action_queue.popleft()
+            player, action = self.action_queue.popleft()
             self.message_queue.append(
-                "Ask {} for their action".format(player.role_name))
-            return player
+                "Ask {} for their {} action".format(
+                    player.role_name, action.name))
+            return (player, action)
 
         self.message_queue.append("All actions in")
 
@@ -216,11 +233,11 @@ class Game():
     def has_been_blocked(self, player):
         """Return True if player has been blocked tonight, False otherwise."""
 
-        return any(player in targets and user.role.night_action == "block"
+        return any(player in targets and action.name == "block"
                    and not self.has_been_blocked(user)
-                   for (user, targets) in self.action_log)
+                   for (user, action, targets) in self.action_log)
 
-    def do_night_action(self, player, targets):
+    def do_night_action(self, player, action, targets):
         """Should only be called during the night phase.
         Add player's night action to the action log.
         If the night action is one that needs to be performed immediately
@@ -229,30 +246,33 @@ class Game():
         Return the result of the night action if it was performed immediately,
         otherwise return None."""
 
-        validate_night_action(player, targets, self)
+        validate_night_action(player, action, targets, self)
 
-        if player.has_night_action():
-            self.action_log.append((player, targets))
+        self.action_log.append((player, action, targets))
 
-            # Decrement remaining uses, if applicable
-            # Note: limited uses are based on night action attempts, i.e.
-            # if a role is blocked, it still loses a use if it tries to use
-            # its action.
-            if player.night_action_uses_left > 0:
-                player.night_action_uses_left -= 1
+        # Decrement remaining uses, if applicable
+        # Note: limited uses are based on night action attempts, i.e.
+        # if a role is blocked, it still loses a use if it tries to use
+        # its action.
+        if (action == player.role.night_action and
+            player.night_action_uses_left > 0):
+            player.night_action_uses_left -= 1
 
-            # Actions that need to be performed immediately
-            if player.role.night_action in immediate_actions:
-                result = perform_night_action(player, self, targets)
-                self.message_queue.append("Inspection result: {}".format(
-                    result))
-                return result
+        # Actions that need to be performed immediately
+        if action.immediate:
+            result = perform_night_action(player, action, self, targets)
+            # TODO: put this in the action function instead
+            self.message_queue.append("Inspection result: {}".format(
+                result))
+            return result
 
     def do_passive_action(self, player, performed_actions):
         """Perform a player's passive action, if applicable."""
 
-        if (perform_passive_action(player, self, performed_actions) and
-            player.passive_action_uses_left > 0):
+        result = perform_passive_action(player, player.role.passive_action,
+            self, performed_actions)
+
+        if result and player.passive_action_uses_left > 0:
             player.passive_action_uses_left -= 1
 
     def process_night_actions(self):
@@ -264,30 +284,26 @@ class Game():
         # Sort the action log by increasing night action priority
         # (We'll go through this list in reverse.)
         self.action_log.sort(
-            key=lambda entry: entry[0].role.night_action_priority)
+            key=lambda entry: entry[1].priority)
 
         # Need to keep record of actions actually performed for passive roles
         performed_actions = []
-
-        # NOTE: Currently the mafia kill can't be roleblocked, etc.
-        if self.mafia_kill:
-            self.death_queue.enqueue(self.mafia_kill)
 
         # Pop each entry from the log and perform its action.
         # Note that performing actions may modify the action log (e.g.
         # roleblocking), which is why we can't just iterate through it.
         while self.action_log:
-            player, targets = self.action_log.pop()
-            performed_actions.append((player, targets))
-            if not player.role.night_action in immediate_actions:
-                perform_night_action(player, self, targets)
+            player, action, targets = self.action_log.pop()
+            performed_actions.append((player, action, targets))
+            if not action.immediate:
+                perform_night_action(player, action, self, targets)
 
 
         # Perform passive actions, if applicable.
         # Currently passive actions don't add anything to the action log.
         passive_actors = sorted(
             filter(lambda p: p.has_passive_action(), self.players),
-            key=lambda p: priority_key(p.role.passive_action_priority))
+            key=lambda p: priority_key(p.role.passive_action))
         for player in passive_actors:
             self.do_passive_action(player, performed_actions)
 
@@ -295,7 +311,6 @@ class Game():
     def end_night(self):
         """End the night phase and process all deaths."""
 
-        self.turn += 1
         announcements = []
 
         if not self.death_queue:
@@ -309,7 +324,6 @@ class Game():
 
         # Clean up
         self.action_log = []
-        self.mafia_kill = None
         for player in self.players:
             player.reset_nightly_flags()
 
