@@ -115,10 +115,10 @@ class Game():
 
         if day_start:
             self.turn = 1
-            self.phase = "day"
+            self.start_day()
         else:
             self.turn = 0
-            self.phase = "night"
+            self.start_night()
 
     def lynch(self, player):
         """Lynch a player. Triggers win condition for active alien and fool."""
