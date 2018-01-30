@@ -70,11 +70,11 @@ class DeathQueue():
 class Game():
     """A single mafia game."""
 
-    def __init__(self, roles, day_start):
+    def __init__(self, game_roles, day_start):
 
         # Players in the game, sorted by alignment and then decreasing
         # night action priority
-        self.players = sorted([Player(None, role) for role in roles],
+        self.players = sorted([Player(None, role) for role in game_roles],
             key=lambda p: (p.role.alignment_id,
             priority_key(p.role.night_action)))
 
