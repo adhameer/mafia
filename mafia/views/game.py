@@ -6,6 +6,7 @@ from .actions import (
     ActionError, InvalidTargetError,
     immediate_actions
 )
+from .action_log import *
 from .player import Player
 from mafia.models.roles import actions
 
@@ -138,8 +139,10 @@ class Game():
             return
 
         self.message_queue.append("{} was lynched".format(player.name))
-        self.kill(player)
+        self.action_log.append(LynchEntry(player))
+        self.action_logs.append(self.action_log)
 
+        self.kill(player)
         self.start_night()
 
     def kill(self, player):
@@ -149,12 +152,19 @@ class Game():
         player.is_alive = False
         self.check_winner()
 
+    def reset_action_log(self):
+        """Set this game's current action log to a new empty one corresponding
+        to the current phase."""
+
+        self.action_log = ActionLog(self.turn(), [])
+
     def start_day(self):
         """Prepare game state for the day phase."""
 
         self._turn += 1
         self.phase = "day"
         self.message_queue.append("Tell everyone to wake up")
+        self.reset_action_log()
 
     def do_gunshot(self, player, target):
         """Should only be called during the day phase. Kill the target
@@ -175,6 +185,9 @@ class Game():
         if player in targets and not player.role.day_action.can_target_self:
             raise InvalidTargetError("This role can't target itself")
 
+        self.action_log.append(
+            ActionEntry(player, player.role.day_action, targets))
+
         result = perform_day_action(player, self, targets)
 
         # Decrement uses remaining if applicable
@@ -183,12 +196,20 @@ class Game():
 
         return result
 
+    def end_day(self):
+        """End the day without a lynch."""
+
+        self.action_log.append(NoLynchEntry())
+        self.action_logs.append(self.action_log)
+        self.start_night()
+
     def start_night(self):
         """Prepare game state for the night phase."""
 
         self._turn += 1
         self.phase = "night"
         self.message_queue.append("Tell everyone to go to bed")
+        self.reset_action_log()
 
         # NOTE: currently the mafia kill can't be blocked because it has a
         # really high priority so that the game will ask for it first.
@@ -233,9 +254,9 @@ class Game():
     def has_been_blocked(self, player):
         """Return True if player has been blocked tonight, False otherwise."""
 
-        return any(player in targets and action.name == "block"
-                   and not self.has_been_blocked(user)
-                   for (user, action, targets) in self.action_log)
+        return any(player in log.targets and log.action.name == "block"
+                   and not self.has_been_blocked(log.player)
+                   for log in self.action_log)
 
     def do_night_action(self, player, action, targets):
         """Should only be called during the night phase.
@@ -248,7 +269,7 @@ class Game():
 
         validate_night_action(player, action, targets, self)
 
-        self.action_log.append((player, action, targets))
+        self.action_log.append(ActionEntry(player, action, targets))
 
         # Decrement remaining uses, if applicable
         # Note: limited uses are based on night action attempts, i.e.
@@ -284,7 +305,7 @@ class Game():
         # Sort the action log by increasing night action priority
         # (We'll go through this list in reverse.)
         self.action_log.sort(
-            key=lambda entry: entry[1].priority)
+            key=lambda entry: entry.action.priority)
 
         # Need to keep record of actions actually performed for passive roles
         performed_actions = []
@@ -293,7 +314,7 @@ class Game():
         # Note that performing actions may modify the action log (e.g.
         # roleblocking), which is why we can't just iterate through it.
         while self.action_log:
-            player, action, targets = self.action_log.pop()
+            player, action, targets = self.action_log.pop().data()
             performed_actions.append((player, action, targets))
             if not action.immediate:
                 perform_night_action(player, action, self, targets)

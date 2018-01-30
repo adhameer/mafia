@@ -96,7 +96,7 @@ def play_game_process(context, request):
 
         # Night phase button clicked
         if form.start_night.data:
-            game.start_night()
+            game.end_day()
 
     else:
         success = False

@@ -24,12 +24,11 @@
 
 <h2>Action Log</h2>
 
-% for i, log in enumerate(game.action_logs):
-## NOTE: currently assumes game didn't have a night 0 (i.e. started in the day phase)
-<h3>Night ${i + 1}</h3>
+% for log in game.action_logs:
+<h3>${log.phase}</h3>
 <ul class="action-log">
-    % for player, action, targets in log:
-    <li><span class="player-name">${player.name}</span> (<span class="role">${player.role_name}</span>) uses <span class="action">${action.name}</span> on <span class="target">${", ".join(target.name for target in targets)}</span></li>
+    % for entry in log.actions:
+    <li>${entry.html_str() | n}</li>
     % endfor
 </ul>
 % endfor
