@@ -9,6 +9,20 @@ from .night import *
 
 import wtforms
 
+def strip_whitespace(str):
+    return str.strip() if str else None
+
+class PlayerForm(wtforms.Form):
+    """A form for entering player info."""
+
+    player_name = wtforms.StringField(filters=[strip_whitespace])
+    submit = wtforms.SubmitField("Submit")
+
+class NextPlayerForm(wtforms.Form):
+    """A form for moving on to the next player that needs to enter their
+    name."""
+
+    submit = wtforms.SubmitField("Next")
 
 @view_config(route_name="play", request_method="GET", renderer="game.mako")
 def play_game(context, request):
@@ -24,8 +38,18 @@ def play_game(context, request):
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
 
+    # Check if not all players have entered their names
+    unnamed_player = request.session.setdefault("unnamed_player", None)
+    if unnamed_player:
+        if unnamed_player.name:
+            form = NextPlayerForm()
+        else:
+            form = PlayerForm()
+        return {"game": game, "unnamed_player": unnamed_player, "form": form}
+
     players = [(i, player.name) for (i, player) in enumerate(game.players)
                 if player.is_alive]
+    players.sort(key=lambda t: t[1])
 
     # Day phase
     if game.phase == "day":
@@ -82,8 +106,26 @@ def play_game_process(context, request):
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
 
+    # Check for entered player names
+    unnamed_player = request.session["unnamed_player"]
+    if unnamed_player:
+        # Find out which form was used
+        submit = request.POST["submit"]
+        if submit == "Submit":
+            form = PlayerForm(request.POST)
+            unnamed_player.name = form.player_name.data
+            return {"game": game, "unnamed_player": unnamed_player,
+                    "form": NextPlayerForm()}
+
+        else:
+            request.session["unnamed_player"] = game.next_unnamed_player()
+            return HTTPFound("/play")
+
     if game.phase == "day":
-        form = DayForm(request.POST)
+        if game.is_modless():
+            form = ModlessDayForm(request.POST)
+        else:
+            form = DayForm(request.POST)
 
         try:
             # Process individual player buttons

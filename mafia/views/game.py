@@ -8,7 +8,7 @@ from .actions import (
 )
 from .action_log import *
 from .player import Player
-from mafia.models.roles import actions
+from mafia.models.roles import roles, actions
 
 from collections import deque
 from copy import copy
@@ -70,13 +70,14 @@ class DeathQueue():
 class Game():
     """A single mafia game."""
 
-    def __init__(self, players, day_start):
+    def __init__(self, roles, day_start):
 
         # Players in the game, sorted by alignment and then decreasing
         # night action priority
-        self.players = sorted([Player(*data) for data in players],
+        self.players = sorted([Player(None, role) for role in roles],
             key=lambda p: (p.role.alignment_id,
             priority_key(p.role.night_action)))
+
 
         # In case of multiple players with the same role, give them
         # distinguishable names (e.g. Vigilante 1 and Vigilante 2)
@@ -88,10 +89,14 @@ class Game():
                 players_with_role[player.role.id].append(player)
             else:
                 players_with_role[player.role.id] = [player]
-        for players in players_with_role.values():
-            if len(players) > 1:
+        for _id, players in players_with_role.items():
+            if len(players) > 1 and roles[_id].night_action:
                 for i, player in enumerate(players):
                     player.role_name += " {}".format(i + 1)
+
+        # Used for the modless role list.
+        self.unnamed_players = self.players[:]
+        shuffle(self.unnamed_players)
 
         # Queue of messages to be accessed by the UI
         self.message_queue = deque()
@@ -124,11 +129,24 @@ class Game():
         else:
             self.start_night()
 
+    def next_unnamed_player(self):
+        """Return the next player that needs to enter their name.
+        If all players have entered their names, return None."""
+
+        if self.unnamed_players:
+            return self.unnamed_players.pop()
+
     def turn(self):
         """Return the phase and turn number this game is currently in, e.g.
         "Day 1"."""
 
         return "{} {}".format(self.phase.capitalize(), ceil(self._turn / 2))
+
+    def is_modless(self):
+        """Return True if the app is automodding this game, False if there
+        should now be a person controlling it. This affects the UI."""
+
+        return self._turn == 1 or all(p.is_alive for p in self.players)
 
     def lynch(self, player):
         """Lynch a player. Triggers win condition for active alien and fool."""

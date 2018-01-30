@@ -3,7 +3,11 @@
 % if action.name == "mafia kill":
 <h2>Mafia Kill</h2>
 % else:
+% if game.is_modless():
+<h2>${player.role_name}'s ${action.name} action</h2>
+% else:
 <h2>${player.name} (${player.role_name})'s ${action.name} action</h2>
+% endif
 % endif
 
 % if isinstance(form, NoTargetForm):

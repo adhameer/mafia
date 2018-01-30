@@ -62,3 +62,12 @@ class Player():
         """Reset all nightly flags to their default state."""
 
         pass
+
+    def secret_role_name(self):
+        """Return this player's role name, excluding any secret info.
+        e.g. for Bleeder, return Villager."""
+
+        if self.role.name == "Bleeder":
+            return "Villager"
+
+        return self.role_name

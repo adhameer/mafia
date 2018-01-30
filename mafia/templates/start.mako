@@ -20,28 +20,9 @@
     </ul>
     % endif
 
-    <table id="player-list">
-        % for i in range(len(form.players)):
-        <tr>
-            <td>Player ${i + 1}</td>
-            <td>${form.players[i].player_name(size=20, maxlength=25)}</td>
-            <td>${form.players[i].role()}</td>
-        </tr>
-        % endfor
-
-        <!-- Hidden fields to keep track of previously deleted players -->
-        % for player in form.old_players:
-        ${player(style="display: none")}
-        % endfor
-    </table>
-
-    % if form.players.errors:
-    <ul class="errors">
-        % for error in form.players.errors:
-        <li>${error}</li>
-        % endfor
-    </ul>
-    % endif
+    % for entry in form.roles:
+    <p>${entry()}</p>
+    % endfor
 
     <p>
         ${form.start_phase.label()}

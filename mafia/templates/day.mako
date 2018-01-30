@@ -1,4 +1,7 @@
+<%! from mafia.views.day import ModlessDayForm, DayForm %>
+
 <form id="day-players" action="/play" method="POST">
+% if isinstance(form, DayForm):
 <table class="players">
     <tr>
         <th>Player</th>
@@ -45,5 +48,11 @@
     </tr>
     % endfor
 </table>
+
+% else:
+<p>${form.lynchee()} ${form.lynch_submit()}</p>
+<p>${form.action_user()} ${form.action_target()} ${form.action_submit()}</p>
+% endif
+
 <p>${form.start_night()}</p>
 </form>

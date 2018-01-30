@@ -1,4 +1,20 @@
+from .actions import ActionError
+
 import wtforms
+
+class ModlessDayForm(wtforms.Form):
+    """A form to be used during the day before someone has died and become
+    the mod. Hides all information about players' roles, alignments,
+    and actions."""
+
+    lynchee = wtforms.SelectField(choices=[], coerce=int)
+    lynch_submit = wtforms.SubmitField("Lynch")
+
+    action_user = wtforms.SelectField(choices=[], coerce=int)
+    action_target = wtforms.SelectField(choices=[], coerce=int)
+    action_submit = wtforms.SubmitField("Submit")
+
+    start_night = wtforms.SubmitField("Night Phase ->")
 
 class DayPlayerForm(wtforms.Form):
     """A form to record a player's day actions."""
@@ -22,6 +38,13 @@ class DayForm(wtforms.Form):
     actions = wtforms.FieldList(wtforms.FormField(DayPlayerForm))
     start_night = wtforms.SubmitField("Night Phase ->")
 
+def fix_modless_form(form, players):
+    """Dynamically set the proper attributes in a ModlessDayForm."""
+
+    form.lynchee.choices = players
+    form.action_user.choices = players
+    form.action_target.choices = players
+
 def fix_day_player_form(form, player, targets):
     """Dynamically set the proper attributes in a DayPlayerForm."""
 
@@ -34,6 +57,14 @@ def fix_day_player_form(form, player, targets):
         form.gun_target.choices = targets
 
 def build_day_form(game, players):
+    """Return a form to be displayed for the day phase, depending on whether
+    or not the game has a mod yet."""
+
+    if game.is_modless():
+        form = ModlessDayForm()
+        fix_modless_form(form, players)
+        return form
+
     form = DayForm()
     for i, player in enumerate(game.players):
         form.actions.append_entry()
@@ -45,6 +76,24 @@ def build_day_form(game, players):
 def process_day_click(form, game):
     """Figure out what button in form was clicked and act accordingly."""
 
+    # No mod yet - minimal information form
+    if isinstance(form, ModlessDayForm):
+        if form.lynch_submit.data:
+            game.lynch(game.players[form.lynchee.data])
+
+        elif form.action_submit.data:
+            user = game.players[form.action_user.data]
+            target = game.players[form.action_target.data]
+
+            if not user.has_day_action():
+                raise ActionError(
+                    "This player doesn't have a usable day action")
+
+            game.do_day_action(user, [target])
+
+        return
+
+    # We have a mod - use the regular DayForm
     for (i, subform) in enumerate(form.actions):
         player = game.players[i]
         if subform.lynch.data:
