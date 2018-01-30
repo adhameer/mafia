@@ -1,7 +1,5 @@
 <%! from mafia.views.night import NoTargetForm, TargetForm, SkipForm %>
 <form id="night-action" action="/play" method="POST">
-## Assume that no mafia role has the "kill" night action.
-## I don't think that's an unreasonable assumption.
 % if action.name == "mafia kill":
 <h2>Mafia Kill</h2>
 % else:
