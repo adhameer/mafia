@@ -16,6 +16,8 @@ class ModlessDayForm(wtforms.Form):
 
     start_night = wtforms.SubmitField("Night Phase ->")
 
+    switch_to_modded = wtforms.SubmitField("Switch to manual modding")
+
 class DayPlayerForm(wtforms.Form):
     """A form to record a player's day actions."""
 
@@ -60,7 +62,7 @@ def build_day_form(game, players):
     """Return a form to be displayed for the day phase, depending on whether
     or not the game has a mod yet."""
 
-    if game.is_modless():
+    if game.is_modless:
         form = ModlessDayForm()
         fix_modless_form(form, players)
         return form
@@ -78,7 +80,10 @@ def process_day_click(form, game):
 
     # No mod yet - minimal information form
     if isinstance(form, ModlessDayForm):
-        if form.lynch_submit.data:
+        if form.switch_to_modded.data:
+            game.is_modless = False
+
+        elif form.lynch_submit.data:
             game.lynch(game.players[form.lynchee.data])
 
         elif form.action_submit.data:

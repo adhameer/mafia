@@ -52,6 +52,7 @@
 % else:
 <p>${form.lynchee()} ${form.lynch_submit()}</p>
 <p>${form.action_user()} ${form.action_target()} ${form.action_submit()}</p>
+<p>${form.switch_to_modded()}</p>
 % endif
 
 <p>${form.start_night()}</p>

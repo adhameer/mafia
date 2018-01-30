@@ -94,7 +94,8 @@ class Game():
                 for i, player in enumerate(players):
                     player.role_name += " {}".format(i + 1)
 
-        # Used for the modless role list.
+        # Used for the modless functionality.
+        self.is_modless = True
         self.unnamed_players = self.players[:]
         shuffle(self.unnamed_players)
 
@@ -141,12 +142,6 @@ class Game():
         "Day 1"."""
 
         return "{} {}".format(self.phase.capitalize(), ceil(self._turn / 2))
-
-    def is_modless(self):
-        """Return True if the app is automodding this game, False if there
-        should now be a person controlling it. This affects the UI."""
-
-        return self._turn == 1 or all(p.is_alive for p in self.players)
 
     def lynch(self, player):
         """Lynch a player. Triggers win condition for active alien and fool."""

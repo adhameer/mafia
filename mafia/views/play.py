@@ -122,7 +122,7 @@ def play_game_process(context, request):
             return HTTPFound("/play")
 
     if game.phase == "day":
-        if game.is_modless():
+        if game.is_modless:
             form = ModlessDayForm(request.POST)
         else:
             form = DayForm(request.POST)
