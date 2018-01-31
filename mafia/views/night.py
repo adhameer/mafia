@@ -21,9 +21,7 @@ class SkipForm(wtforms.Form):
 def fix_target_form(form, player, action, targets):
     """Dynamically set the proper attributes in a TargetForm."""
 
-    # TODO: need a way of indicating that an action is optional that isn't
-    # tied to role.
-    if player.role.action_optional:
+    if action.optional:
         targets = [(-1, "Don't use")] + targets
 
     for entry in form.targets:

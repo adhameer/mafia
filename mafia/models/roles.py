@@ -50,6 +50,7 @@ def convert_action_values(row):
     convert_none(row, "can_target_self", convert=convert_bool)
     convert_none(row, "targets", convert=int)
     convert_none(row, "immediate", convert=convert_bool)
+    convert_none(row, "optional", convert=convert_bool)
 
     return Action(**row)
 
@@ -66,7 +67,6 @@ def convert_role_values(row):
     convert_none(row, "passive_action_uses", convert=int)
     row["alignment_id"] = int(row["alignment_id"])
     row["perceived_alignment_id"] = int(row["perceived_alignment_id"])
-    convert_none(row, "action_optional", convert=convert_bool)
 
     return Role(**row)
 
