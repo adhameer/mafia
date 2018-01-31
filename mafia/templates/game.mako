@@ -4,11 +4,21 @@
 
 % if context.get("unnamed_player", None):
 <form id="player-info" action="/play" method="POST">
+
 % if isinstance(form, PlayerForm):
-<p>Next player, enter your name:</p>
-<p>${form.player_name()} ${form.submit()}</p>
+    <p>Next player, enter your name:</p>
+    <p>${form.player_name()} ${form.submit()}</p>
+
+    % if form.player_name.errors:
+    <ul class="errors">
+        % for error in form.player_name.errors:
+        <li>${error}</li>
+        % endfor
+    </ul>
+    % endif
+
 % else:
-<p>Your role is ${unnamed_player.secret_role_name()}. ${form.submit()}</p>
+    <p>Your role is ${unnamed_player.secret_role_name()}. ${form.submit()}</p>
 % endif
 </form>
 

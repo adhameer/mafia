@@ -15,7 +15,8 @@ def strip_whitespace(str):
 class PlayerForm(wtforms.Form):
     """A form for entering player info."""
 
-    player_name = wtforms.StringField(filters=[strip_whitespace])
+    player_name = wtforms.StringField(filters=[strip_whitespace],
+        validators=[wtforms.validators.DataRequired()])
     submit = wtforms.SubmitField("Submit")
 
 class NextPlayerForm(wtforms.Form):
@@ -113,6 +114,10 @@ def play_game_process(context, request):
         submit = request.POST["submit"]
         if submit == "Submit":
             form = PlayerForm(request.POST)
+            if not form.validate():
+                return {"game": game, "unnamed_player": unnamed_player,
+                        "form": form}
+
             unnamed_player.name = form.player_name.data
             return {"game": game, "unnamed_player": unnamed_player,
                     "form": NextPlayerForm()}
