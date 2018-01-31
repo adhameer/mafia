@@ -16,7 +16,7 @@ class GameForm(wtforms.Form):
     set_num_players = wtforms.SubmitField("Go")
 
     roles = wtforms.FieldList(wtforms.SelectField(
-        choices=role_choices, coerce=int, default=0))
+        choices=role_choices, coerce=int, default=3))
 
     start_phase = wtforms.SelectField("Start phase",
         choices=[(0, "Day"), (1, "Night")], coerce=int, default=0)
