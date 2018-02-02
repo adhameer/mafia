@@ -9,3 +9,4 @@ id,name,night_action_id,night_action_uses,day_action_id,day_action_uses,passive_
 7,Sniper,,,5,1,,,0,0,"Once per game, can kill a person during the day."
 8,Bleeder,,,,,6,-1,1,1,"When killed at night, survives one extra day and dies the next night."
 9,Parity Detective,3,-1,,,,,1,1,Chooses two people each night to learn whether or not they have the same alignment.
+10,Gunsmith,8,-1,,,,,1,1,Chooses one person each night to give them a gun. Guns can be shot during the day to kill a player instantly.

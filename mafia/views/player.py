@@ -24,7 +24,7 @@ class Player():
         self.is_bleeding = False # bleeder
         self.is_activated = False # alien
         self.has_lost_action = False # psychic
-        self.has_gun = False # gunsmith targets
+        self.guns = 0 # gunsmith targets
 
         self.last_target = None # protective roles
 
@@ -56,7 +56,7 @@ class Player():
         """Return True if this player has a gun and can use it, False
         otherwise."""
 
-        return self.is_alive and self.has_gun
+        return self.is_alive and self.guns
 
     def reset_nightly_flags(self):
         """Reset all nightly flags to their default state."""

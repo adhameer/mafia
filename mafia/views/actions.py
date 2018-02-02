@@ -77,6 +77,9 @@ def parity(user, game, target1, target2):
     return ("same" if target1.perceived_alignment == target2.perceived_alignment
         else "different")
 
+def give_gun(user, game, target):
+    target.guns += 1
+
 ### DAY ACTIONS
 
 def shoot(user, game, target):
@@ -124,6 +127,7 @@ night_actions = {
     "block": block,
     "inspect": inspect,
     "parity": parity,
+    "give gun": give_gun,
 }
 
 day_actions = {

@@ -183,11 +183,14 @@ class Game():
         """Should only be called during the day phase. Kill the target
         immediately and take away player's gun."""
 
+        if not player.guns:
+            raise ActionError("This person doesn't have a gun")
+
         if player == target:
             raise InvalidTargetError("You can't shoot yourself with a gun")
 
+        player.guns -= 1
         self.kill(target)
-        player.has_gun = False
 
     def do_day_action(self, player, targets):
         """Should only be called during the day phase.
