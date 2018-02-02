@@ -80,6 +80,13 @@ def parity(user, game, target1, target2):
 def give_gun(user, game, target):
     target.guns += 1
 
+def oracle(user, game, target):
+    def alignment_reveal(game):
+        if not user.is_alive:
+            game.message_queue.append("{}'s alignment is {}".format(
+                target.name, target.perceived_alignment))
+    game.night_end_hooks.append(alignment_reveal)
+
 ### DAY ACTIONS
 
 def shoot(user, game, target):
@@ -128,6 +135,7 @@ night_actions = {
     "inspect": inspect,
     "parity": parity,
     "give gun": give_gun,
+    "oracle": oracle,
 }
 
 day_actions = {

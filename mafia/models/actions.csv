@@ -8,3 +8,4 @@ id,name,priority,can_target_self,targets,immediate,optional
 6,bleed,-5,,,,
 7,mafia kill,100,True,1,False,False
 8,give gun,0,False,1,False,False
+9,oracle,0,False,1,False,False
