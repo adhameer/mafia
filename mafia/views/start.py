@@ -58,8 +58,6 @@ def create_game_process(context, request):
     """Set the number of players in a game, or start a game if ready."""
 
     # Delete leftover information from previous game, if present
-    if "winner" in request.session:
-        del request.session["winner"]
     request.session["game"] = None
 
     form = GameForm(request.POST)

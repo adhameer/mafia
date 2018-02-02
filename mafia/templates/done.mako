@@ -13,7 +13,7 @@
 </div>
 % endif
 
-<p>${winner} wins!</p>
+<p>${game.winner} wins!</p>
 
 <h2>Roles</h2>
 <ul class="roles-list">

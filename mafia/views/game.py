@@ -78,6 +78,8 @@ class Game():
             key=lambda p: (p.role.alignment_id,
             priority_key(p.role.night_action)))
 
+        # Set when a winner is determined
+        self.winner = None
 
         # In case of multiple players with the same role, give them
         # distinguishable names (e.g. Vigilante 1 and Vigilante 2)
@@ -379,15 +381,15 @@ class Game():
         """Check if a win condition has been met. If so, raise GameOver with
         the name of the winning faction."""
 
-        maybe_winner = self.winner()
-        if maybe_winner:
-            raise GameOver(maybe_winner)
+        self.winner = self.calculate_winner()
+        if self.winner:
+            raise GameOver(self.winner)
 
-    def winner(self):
+    def calculate_winner(self):
         """If a win condition has been met, return the name of the winning
         faction.
         If everybody loses, return "no one".
-        Otherwise, return False."""
+        Otherwise, return None."""
 
         living_players = [p for p in self.players if p.is_alive]
         num_living = len(living_players)
@@ -422,9 +424,6 @@ class Game():
             return "Mafia"
         elif living_cult >= num_living / 2:
             return "Cult"
-
-        # No win conditions met yet
-        return False
 
     def pop_messages(self):
         """Clear the message queue and return a list of the messages that

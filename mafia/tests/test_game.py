@@ -72,24 +72,24 @@ def test_has_been_blocked_multiple_hookers():
 def test_winner_town():
     game = Game([3], True)
 
-    assert game.winner() == "Town"
+    assert game.calculate_winner() == "Town"
 
 def test_winner_mafia_tie():
     game = Game([0, 3], True)
 
-    assert game.winner() == "Mafia"
+    assert game.calculate_winner() == "Mafia"
 
 def test_winner_just_mafia():
     game = Game([0], True)
 
-    assert game.winner() == "Mafia"
+    assert game.calculate_winner() == "Mafia"
 
 def test_winner_no_one():
     game = Game([], True)
 
-    assert game.winner() == "no one"
+    assert game.calculate_winner() == "no one"
 
 def test_winner_none_yet():
     game = Game([3, 5, 0], True)
 
-    assert not game.winner()
+    assert not game.calculate_winner()

@@ -4,15 +4,14 @@ from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
 @view_config(route_name="done", renderer="done.mako")
 def game_over(context, request):
 
-    if "game" not in request.session:
+    game = request.session.setdefault("game", None)
+
+    if not game:
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
 
-    if "winner" not in request.session:
+    if not game.winner:
         request.session.flash("This game isn't over yet.")
         return HTTPSeeOther("/play")
 
-    game = request.session["game"]
-    winner = request.session["winner"]
-
-    return {"game": game, "winner": winner, "messages": game.pop_messages()}
+    return {"game": game, "messages": game.pop_messages()}

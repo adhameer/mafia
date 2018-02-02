@@ -29,15 +29,15 @@ class NextPlayerForm(wtforms.Form):
 def play_game(context, request):
     """The gameplay page."""
 
-    if "winner" in request.session:
-        # Current game is already over
-        return HTTPSeeOther("/done")
-
     game = request.session.setdefault("game", None)
 
     if not game:
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
+
+    if game.winner:
+        # Current game is already over
+        return HTTPSeeOther("/done")
 
     # Check if not all players have entered their names
     unnamed_player = request.session.setdefault("unnamed_player", None)
@@ -81,8 +81,7 @@ def play_game(context, request):
 
             try:
                 game.end_night()
-            except GameOver as e:
-                request.session["winner"] = str(e)
+            except GameOver:
                 return HTTPFound("/done")
 
             game.start_day()
@@ -97,15 +96,15 @@ def play_game(context, request):
 def play_game_process(context, request):
     """Process clicks on the gameplay page."""
 
-    if "winner" in request.session:
-        # Current game is already over
-        return HTTPSeeOther("/done")
-
     game = request.session.setdefault("game", None)
 
     if not game:
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
+
+    if game.winner:
+        # Current game is already over
+        return HTTPSeeOther("/done")
 
     # Check for entered player names
     unnamed_player = request.session["unnamed_player"]
@@ -137,8 +136,7 @@ def play_game_process(context, request):
             process_day_click(form, game)
         except ActionError as e:
             request.session.flash(str(e))
-        except GameOver as e:
-            request.session["winner"] = str(e)
+        except GameOver:
             return HTTPFound("/done")
 
         # Night phase button clicked
