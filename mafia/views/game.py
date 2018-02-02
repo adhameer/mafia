@@ -106,6 +106,7 @@ class Game():
         self.action_queue = deque()
         self.death_queue = DeathQueue()
         self.action_log = []
+        self.night_end_hooks = []
 
         # Used to figure out which mafia member carries out the kill
         # This relies on the fact that the plain Mafia role has the lowest id.
@@ -367,6 +368,10 @@ class Game():
         # Read all death announcements in a random order
         shuffle(announcements)
         self.message_queue.extend(announcements)
+
+        # Invoke end-of-night hooks
+        while self.night_end_hooks:
+            self.night_end_hooks.pop()(self)
 
         self.check_winner()
 
