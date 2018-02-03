@@ -85,6 +85,7 @@ def process_day_click(form, game):
 
         elif form.lynch_submit.data:
             game.lynch(game.players[form.lynchee.data])
+            game.start_night()
 
         elif form.action_submit.data:
             user = game.players[form.action_user.data]

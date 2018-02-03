@@ -159,7 +159,6 @@ class Game():
         self.action_logs.append(self.action_log)
 
         self.kill(player)
-        self.start_night()
 
     def kill(self, player):
         """Kill a player immediately. Used for lynching, gunshots, etc.
@@ -220,7 +219,6 @@ class Game():
 
         self.action_log.append(NoLynchEntry())
         self.action_logs.append(self.action_log)
-        self.start_night()
 
     def start_night(self):
         """Prepare game state for the night phase."""
