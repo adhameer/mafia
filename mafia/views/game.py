@@ -186,7 +186,7 @@ class Game():
         immediately and take away player's gun."""
 
         if not player.guns:
-            raise ActionError("This person doesn't have a gun")
+            raise ActionError("This player doesn't have a gun")
 
         if player == target:
             raise InvalidTargetError("You can't shoot yourself with a gun")
@@ -199,6 +199,10 @@ class Game():
         Perform the player's day action on the given target(s).
         Return the result of the action, or None if the action does not
         give a result."""
+
+        if not player.has_day_action():
+            raise ActionError("This player doesn't have a day action "
+                              "that they can use")
 
         if player in targets and not player.role.day_action.can_target_self:
             raise InvalidTargetError("This role can't target itself")
