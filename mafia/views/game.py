@@ -138,7 +138,10 @@ class Game():
         If all players have entered their names, return None."""
 
         if self.unnamed_players:
-            return self.unnamed_players.pop()
+            return self.unnamed_players[-1]
+
+    def pop_next_unnamed_player(self):
+        self.unnamed_players.pop()
 
     def turn(self):
         """Return the phase and turn number this game is currently in, e.g.
@@ -253,13 +256,12 @@ class Game():
             # NOTE: To add Nurse and Deputy, the best way to arrange it is
             # probably to return them here instead of the doc/cop if the
             # original role is dead.
-            player, action = self.action_queue.popleft()
-            self.message_queue.append(
-                "Ask {} for their {} action".format(
-                    player.role_name, action.name))
-            return (player, action)
+            return self.action_queue[0]
 
         self.message_queue.append("All actions in")
+
+    def pop_next_action(self):
+        self.action_queue.popleft()
 
     def killing_mafia(self):
         """Return the player that carries out the mafia kill tonight.

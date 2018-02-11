@@ -6,6 +6,7 @@ from .actions import ActionError
 from .game import GameOver
 from .day import *
 from .night import *
+from ..views import games
 
 import wtforms
 
@@ -29,18 +30,20 @@ class NextPlayerForm(wtforms.Form):
 def play_game(context, request):
     """The gameplay page."""
 
-    game = request.session.setdefault("game", None)
+    game_id = request.session.setdefault("game_id", None)
 
-    if not game:
+    if not game_id:
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
+
+    game = games[game_id]
 
     if game.winner:
         # Current game is already over
         return HTTPSeeOther("/done")
 
     # Check if not all players have entered their names
-    unnamed_player = request.session.setdefault("unnamed_player", None)
+    unnamed_player = game.next_unnamed_player()
     if unnamed_player:
         if unnamed_player.name:
             form = NextPlayerForm()
@@ -54,26 +57,24 @@ def play_game(context, request):
 
     # Day phase
     if game.phase == "day":
-        # Delete leftover night data
-        if "next_action" in request.session:
-            del request.session["next_action"]
-
         form = build_day_form(game, players)
 
         return {"game": game, "form": form, "messages": game.pop_messages()}
 
     # Night phase
     else:
-        if "next_action" not in request.session:
-            request.session["next_action"] = game.next_action()
-
-        next_action = request.session["next_action"]
+        next_action = game.next_action()
 
         if next_action:
             # Ask for a target
+            player = next_action[0]
+            action = next_action[1]
+            messages = game.pop_messages()
+            messages.append("Ask {} for their {} action".format(
+                player.role_name, action.name))
             form = build_night_form(game, next_action, players)
-            return {"game": game, "form": form, "messages": game.pop_messages(),
-                "player": next_action[0], "action": next_action[1]}
+            return {"game": game, "form": form, "messages": messages,
+                    "player": player, "action": action}
 
         else:
             # All night actions taken
@@ -96,18 +97,20 @@ def play_game(context, request):
 def play_game_process(context, request):
     """Process clicks on the gameplay page."""
 
-    game = request.session.setdefault("game", None)
+    game_id = request.session.setdefault("game_id", None)
 
-    if not game:
+    if not game_id:
         request.session.flash("You don't have a game in progress.")
         return HTTPSeeOther("/")
+
+    game = games[game_id]
 
     if game.winner:
         # Current game is already over
         return HTTPSeeOther("/done")
 
     # Check for entered player names
-    unnamed_player = request.session["unnamed_player"]
+    unnamed_player = game.next_unnamed_player()
     if unnamed_player:
         # Find out which form was used
         submit = request.POST["submit"]
@@ -122,7 +125,7 @@ def play_game_process(context, request):
                     "form": NextPlayerForm()}
 
         else:
-            request.session["unnamed_player"] = game.next_unnamed_player()
+            game.pop_next_unnamed_player()
             return HTTPFound("/play")
 
     if game.phase == "day":
@@ -152,7 +155,7 @@ def play_game_process(context, request):
             request.session.flash(str(e))
 
         if success:
-            request.session["next_action"] = game.next_action()
+            game.pop_next_action()
 
     # Refresh the page to invoke play_game again.
     # This also prevents accidental double requests.

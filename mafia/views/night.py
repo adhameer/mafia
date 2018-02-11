@@ -67,7 +67,7 @@ def process_night_click(request, game):
         return False
 
     form = formclass(request.POST)
-    player, action = request.session["next_action"]
+    player, action = game.next_action()
 
     if isinstance(form, NoTargetForm) and not form.choice.data:
         # Chose not to use an optional action

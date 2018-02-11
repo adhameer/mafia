@@ -3,6 +3,7 @@ from pyramid.httpexceptions import HTTPFound
 
 from ..models import roles
 from .game import Game
+from ..views import add_game
 
 import wtforms
 from multidict import MultiDict
@@ -49,7 +50,8 @@ def create_game(context, request):
     """The page to enter a number of players and player information."""
 
     form = request.session.setdefault("game_form", {})
-    game = request.session.setdefault("game", None)
+    game_id = request.session.setdefault("game_id", None)
+    game = games[game_id] if game_id else None
 
     return {"form": GameForm(data=form), "game": game}
 
@@ -58,12 +60,12 @@ def create_game_process(context, request):
     """Set the number of players in a game, or start a game if ready."""
 
     # Delete leftover information from previous game, if present
-    request.session["game"] = None
+    request.session["game_id"] = None
 
     form = GameForm(request.POST)
     request.session["game_form"] = form.data
 
-    response = {"form": form, "game": request.session["game"]}
+    response = {"form": form, "game": None}
 
     if not form.validate():
         return response
@@ -78,8 +80,7 @@ def create_game_process(context, request):
     if form.submit.data:
         game = Game([e.data for e in form.roles.entries],
             not form.start_phase.data)
-        request.session["game"] = game
-        request.session["unnamed_player"] = game.next_unnamed_player()
+        request.session["game_id"] = add_game(game)
 
         return HTTPFound("/play")
 
