@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Mafia{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+{% with flash = get_flashed_messages() %}
+{% if flash %}
+<div id="flash-messages">
+<ul>
+    {% for message in flash %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+</div>
+{% endif %}
+{% endwith %}
+
+{% block content %} {% endblock %}
+
+</body>
+</html>

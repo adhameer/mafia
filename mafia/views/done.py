@@ -1,21 +1,20 @@
-from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
+from mafia import app
+from flask import session, redirect, url_for, render_template, flash
 
-from ..views import games
+from ..views import get_game
 
-@view_config(route_name="done", renderer="done.mako")
-def game_over(context, request):
+@app.route("/done")
+def game_over():
 
-    game_id = request.session.setdefault("game_id", None)
+    game_id = session.setdefault("game_id", None)
+    game = get_game(game_id)
 
-    if not game_id:
-        request.session.flash("You don't have a game in progress.")
-        return HTTPSeeOther("/")
-
-    game = games[game_id]
+    if not game:
+        flash("You don't have a game in progress.")
+        return redirect("/", code=303)
 
     if not game.winner:
-        request.session.flash("This game isn't over yet.")
-        return HTTPSeeOther("/play")
+        flash("This game isn't over yet.")
+        return redirect(url_for("play_game"), code=303)
 
-    return {"game": game, "messages": game.pop_messages()}
+    return render_template("done.html", game=game, messages=game.pop_messages())

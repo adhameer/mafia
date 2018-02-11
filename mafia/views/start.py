@@ -1,16 +1,17 @@
-from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPFound
+from flask import render_template, session, redirect
+from mafia import app
 
 from ..models import roles
 from .game import Game
-from ..views import add_game
+from ..views import add_game, get_game
 
+from flask_wtf import FlaskForm
 import wtforms
 from multidict import MultiDict
 
 role_choices = [(role.id, role.name) for role in roles]
 
-class GameForm(wtforms.Form):
+class GameForm(FlaskForm):
     """A form for entering info to start a game."""
 
     num_players = wtforms.IntegerField("How many players?")
@@ -45,43 +46,43 @@ class GameForm(wtforms.Form):
         for i in range(abs(n - num_players)):
             append_or_pop()
 
-@view_config(route_name="start", request_method="GET", renderer="start.mako")
-def create_game(context, request):
+@app.route("/", methods=["GET"])
+def create_game():
     """The page to enter a number of players and player information."""
 
-    form = request.session.setdefault("game_form", {})
-    game_id = request.session.setdefault("game_id", None)
-    game = games[game_id] if game_id else None
+    form = session.setdefault("game_form", {})
+    game_id = session.setdefault("game_id", None)
+    game = get_game(game_id)
 
-    return {"form": GameForm(data=form), "game": game}
+    return render_template("start.html", form=GameForm(data=form), game=game)
 
-@view_config(route_name="start", request_method="POST", renderer="start.mako")
-def create_game_process(context, request):
+@app.route("/", methods=["POST"])
+def create_game_process():
     """Set the number of players in a game, or start a game if ready."""
 
     # Delete leftover information from previous game, if present
-    request.session["game_id"] = None
+    session["game_id"] = None
 
-    form = GameForm(request.POST)
-    request.session["game_form"] = form.data
+    form = GameForm()
+    session["game_form"] = form.data
 
     response = {"form": form, "game": None}
 
     if not form.validate():
-        return response
+        return render_template("start.html", **response)
 
     # Change the number of players
     if form.set_num_players.data:
         form.add_role_fields(form.num_players.data)
-        request.session["game_form"] = form.data
-        return response
+        session["game_form"] = form.data
+        return render_template("start.html", **response)
 
     # Start a game
     if form.submit.data:
         game = Game([e.data for e in form.roles.entries],
             not form.start_phase.data)
-        request.session["game_id"] = add_game(game)
+        session["game_id"] = add_game(game)
 
-        return HTTPFound("/play")
+        return redirect("/play")
 
-    return response
+    return render_template("start.html", **response)

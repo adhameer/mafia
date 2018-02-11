@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}
+Mafia - Game in Progress
+{% endblock %}
+
+{% block content %}
+{% if pregame %}
+    <form id="player-info" action="/play" method="POST">
+    {{ form.hidden_tag() }}
+    {% if not role %}
+        <p>Next player, enter your name:</p>
+        <p>{{ form.player_name() }} {{ form.submit() }}</p>
+
+        {% if form.player_name.errors %}
+        <ul class="errors">
+            {% for error in form.player_name.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+    {% else %}
+        <p>Your role is {{ role }}. {{ form.submit() }}</p>
+    {% endif %}
+    </form>
+
+{% else %}
+    <h1>{{ game.turn() }}</h1>
+
+    {% if messages %}
+    <div class="messages">
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if game.phase == "day" %}
+    {% include "day.html" %}
+    {% else %}
+    {% include "night.html" %}
+    {% endif %}
+{% endif %}
+{% endblock %}

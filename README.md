@@ -34,16 +34,33 @@ I use `env` for my path, which creates a subfolder `env` of this one where all y
     C:\> env\Scripts\pip install -e .
     ```
 
+Before you can run the app, you need to set up some environment variables in your virtualenv. You should only need to do this once. (The debug variable is optional.)
+
+- Mac and Linux:
+    ```
+    $ source env/bin/activate
+    $ export FLASK_APP=mafia.py
+    $ export FLASK_DEBUG=1
+    $ deactivate
+    ```
+- Windows:
+    ```
+    C:\> env\Scripts\activate
+    C:\> set FLASK_APP=mafia.py
+    C:\> set FLASK_DEBUG=1
+    C:\> deactivate
+    ```
+
 Now you can run the server with:
 
 - Mac and Linux:
     ```
-    $ env/bin/pserve development.ini --reload
+    $ env/bin/flask run
     ```
 
 - Windows:
     ```
-    C:\> env\Scripts\pserve development.ini --reload
+    C:\> env\Scripts\flask run
     ```
 
-Then go check out the app at localhost:6543.
+Then go check out the app at localhost:5000.

@@ -1,8 +1,9 @@
 from .actions import ActionError
 
+from flask_wtf import FlaskForm
 import wtforms
 
-class ModlessDayForm(wtforms.Form):
+class ModlessDayForm(FlaskForm):
     """A form to be used during the day before someone has died and become
     the mod. Hides all information about players' roles, alignments,
     and actions."""
@@ -18,7 +19,7 @@ class ModlessDayForm(wtforms.Form):
 
     switch_to_modded = wtforms.SubmitField("Switch to manual modding")
 
-class DayPlayerForm(wtforms.Form):
+class DayPlayerForm(FlaskForm):
     """A form to record a player's day actions."""
 
     lynch = wtforms.SubmitField("Lynch")
@@ -34,7 +35,7 @@ class DayPlayerForm(wtforms.Form):
     # There must be a better way to do this.
     hidden = wtforms.HiddenField("")
 
-class DayForm(wtforms.Form):
+class DayForm(FlaskForm):
     """A form for recording day actions."""
 
     actions = wtforms.FieldList(wtforms.FormField(DayPlayerForm))

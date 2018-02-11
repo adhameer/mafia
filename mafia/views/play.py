@@ -1,55 +1,58 @@
-from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPFound, HTTPSeeOther
+from flask import flash, session, redirect, url_for, render_template, request
+from mafia import app
 
 from ..models import roles
 from .actions import ActionError
 from .game import GameOver
 from .day import *
 from .night import *
-from ..views import games
+from ..views import get_game
 
+from flask_wtf import FlaskForm
 import wtforms
 
 def strip_whitespace(str):
     return str.strip() if str else None
 
-class PlayerForm(wtforms.Form):
+class PlayerForm(FlaskForm):
     """A form for entering player info."""
 
     player_name = wtforms.StringField(filters=[strip_whitespace],
         validators=[wtforms.validators.DataRequired()])
     submit = wtforms.SubmitField("Submit")
 
-class NextPlayerForm(wtforms.Form):
+class NextPlayerForm(FlaskForm):
     """A form for moving on to the next player that needs to enter their
     name."""
 
     submit = wtforms.SubmitField("Next")
 
-@view_config(route_name="play", request_method="GET", renderer="game.mako")
-def play_game(context, request):
+@app.route("/play", methods=["GET"])
+def play_game():
     """The gameplay page."""
 
-    game_id = request.session.setdefault("game_id", None)
+    game_id = session.setdefault("game_id", None)
+    game = get_game(game_id)
 
-    if not game_id:
-        request.session.flash("You don't have a game in progress.")
-        return HTTPSeeOther("/")
-
-    game = games[game_id]
+    if not game:
+        flash("You don't have a game in progress.")
+        return redirect("/", code=303)
 
     if game.winner:
         # Current game is already over
-        return HTTPSeeOther("/done")
+        return redirect(url_for("game_over"), code=303)
 
     # Check if not all players have entered their names
     unnamed_player = game.next_unnamed_player()
     if unnamed_player:
         if unnamed_player.name:
-            form = NextPlayerForm()
+            return render_template(
+                "game.html", game=game, pregame=True, form=NextPlayerForm(),
+                role=unnamed_player.secret_role_name())
         else:
-            form = PlayerForm()
-        return {"game": game, "unnamed_player": unnamed_player, "form": form}
+            return render_template(
+                "game.html", game=game, pregame=True, form=PlayerForm())
+
 
     players = [(i, player.name) for (i, player) in enumerate(game.players)
                 if player.is_alive]
@@ -59,7 +62,8 @@ def play_game(context, request):
     if game.phase == "day":
         form = build_day_form(game, players)
 
-        return {"game": game, "form": form, "messages": game.pop_messages()}
+        return render_template(
+            "game.html", game=game, form=form, messages=game.pop_messages())
 
     # Night phase
     else:
@@ -73,8 +77,10 @@ def play_game(context, request):
             messages.append("Ask {} for their {} action".format(
                 player.role_name, action.name))
             form = build_night_form(game, next_action, players)
-            return {"game": game, "form": form, "messages": messages,
-                    "player": player, "action": action}
+            return render_template(
+                "game.html", game=game, form=form,
+                form_type=form.__class__.__name__, messages=messages,
+                player=player, action=action)
 
         else:
             # All night actions taken
@@ -83,64 +89,65 @@ def play_game(context, request):
             try:
                 game.end_night()
             except GameOver:
-                return HTTPFound("/done")
+                return redirect(url_for("game_over"))
 
             game.start_day()
 
             # Refresh
-            return HTTPFound("/play")
+            return redirect(url_for("play_game"))
 
 
     return {"game": game, "messages": game.pop_messages()}
 
-@view_config(route_name="play", request_method="POST", renderer="game.mako")
-def play_game_process(context, request):
+@app.route("/play", methods=["POST"])
+def play_game_process():
     """Process clicks on the gameplay page."""
 
-    game_id = request.session.setdefault("game_id", None)
+    game_id = session.setdefault("game_id", None)
+    game = get_game(game_id)
 
-    if not game_id:
-        request.session.flash("You don't have a game in progress.")
-        return HTTPSeeOther("/")
-
-    game = games[game_id]
+    if not game:
+        flash("You don't have a game in progress.")
+        return redirect("/", code=303)
 
     if game.winner:
         # Current game is already over
-        return HTTPSeeOther("/done")
+        return redirect(url_for("game_over"), code=303)
 
     # Check for entered player names
     unnamed_player = game.next_unnamed_player()
     if unnamed_player:
         # Find out which form was used
-        submit = request.POST["submit"]
+        submit = request.form["submit"]
         if submit == "Submit":
-            form = PlayerForm(request.POST)
+            form = PlayerForm()
             if not form.validate():
-                return {"game": game, "unnamed_player": unnamed_player,
-                        "form": form}
+                return render_template(
+                    "game.html", game=game, pregame=True, form=form)
 
             unnamed_player.name = form.player_name.data
-            return {"game": game, "unnamed_player": unnamed_player,
-                    "form": NextPlayerForm()}
+            return render_template(
+                "game.html", game=game, pregame=True, form=NextPlayerForm(),
+                role=unnamed_player.secret_role_name())
 
         else:
             game.pop_next_unnamed_player()
-            return HTTPFound("/play")
+            return redirect(url_for("play_game"))
 
     if game.phase == "day":
         if game.is_modless:
-            form = ModlessDayForm(request.POST)
+            form = ModlessDayForm()
         else:
-            form = DayForm(request.POST)
+            form = DayForm()
 
         try:
+            print(form.validate())
             # Process individual player buttons
             process_day_click(form, game)
         except ActionError as e:
-            request.session.flash(str(e))
+            flash(str(e))
         except GameOver:
-            return HTTPFound("/done")
+            return redirect(url_for("game_over"))
 
         # Night phase button clicked
         if form.start_night.data:
@@ -152,11 +159,11 @@ def play_game_process(context, request):
         try:
             success = process_night_click(request, game)
         except ActionError as e:
-            request.session.flash(str(e))
+            flash(str(e))
 
         if success:
             game.pop_next_action()
 
     # Refresh the page to invoke play_game again.
     # This also prevents accidental double requests.
-    return HTTPFound("/play")
+    return redirect(url_for("play_game"))

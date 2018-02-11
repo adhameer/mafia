@@ -55,7 +55,7 @@ def process_night_click(request, game):
 
     # Figure out what kind of form this was
     # There must be a better way to do this
-    submit = request.POST["submit"]
+    submit = request.form["submit"]
     if submit == "Decide":
         formclass = NoTargetForm
     elif submit == "Submit":
@@ -66,7 +66,7 @@ def process_night_click(request, game):
     else: # this shouldn't happen
         return False
 
-    form = formclass(request.POST)
+    form = formclass(request.form)
     player, action = game.next_action()
 
     if isinstance(form, NoTargetForm) and not form.choice.data:
