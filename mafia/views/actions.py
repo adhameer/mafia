@@ -62,7 +62,7 @@ def heal(user, game, target):
 
 def block(user, game, target):
     game.action_log = [entry for entry in game.action_log
-                       if entry[0] != target]
+                       if entry.player != target]
 
 def inspect(user, game, target):
     if game.has_been_blocked(user):
